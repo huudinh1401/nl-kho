@@ -1,29 +1,49 @@
 {
   "expo": {
-    "name": "nl-kho",
+    "name": "NL KHO",
     "slug": "nl-kho",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/nlkho.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/iconlas.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#16a34a"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.namnhi993.nlkho"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/nlkho.png",
+        "backgroundColor": "#16a34a"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "googleServicesFile": "./android/app/google-services.json",
+      "package": "com.namnhi993.nlkho"
+    },
+    "notification": {
+      "icon": "./assets/nlkho_noti.png",
+      "color": "#16a34a",
+      "iosDisplayInForeground": true,
+      "androidMode": "default",
+      "androidCollapsedTitle": "NL KHO"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "favicon": "./assets/nlkho.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f4578d19-a7fa-48e1-acb5-23de278b0584"
+      }
+    },
+    "owner": "namnhi993",
+    "plugins": [
+      "expo-font",
+      "expo-notifications"
+    ]
   }
 }
