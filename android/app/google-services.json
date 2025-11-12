@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "870458226823",
+    "project_id": "nl-kho",
+    "storage_bucket": "nl-kho.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:870458226823:android:65770ed762c5b0dd522022",
+        "android_client_info": {
+          "package_name": "com.namnhi993.nlkho"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNSxyp3dYwEAqFL4zrgUf4hLbkV31hpo0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
