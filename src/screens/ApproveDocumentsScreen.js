@@ -11,13 +11,26 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { getImports, approveImport, getInvoices, approveInvoice, getReturns, approveReturn } from '../services/api';
+import { 
+    getImports, 
+    getInvoices, 
+    getReturns, 
+    getImportDetail,
+    getInvoiceDetail,
+    getReturnDetail,
+    approveImport, 
+    approveInvoice, 
+    approveReturn 
+} from '../services/api';
+import DocumentDetailModal from '../components/DocumentDetailModal';
 
 const ApproveDocumentsScreen = ({ navigation }) => {
     const [documents, setDocuments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [approvingId, setApprovingId] = useState(null);
+    const [selectedDocument, setSelectedDocument] = useState(null);
+    const [showDetailModal, setShowDetailModal] = useState(false);
 
     useEffect(() => {
         loadDocuments();
@@ -46,7 +59,6 @@ const ApproveDocumentsScreen = ({ navigation }) => {
             const invoicesArray = Array.isArray(invoicesResult)
                 ? invoicesResult
                 : invoicesResult.data || [];
-
             const pendingInvoices = invoicesArray
                 .filter(doc => doc.status === 'pending')
                 .map(doc => ({ ...doc, documentType: 'invoice' }));
@@ -121,12 +133,74 @@ const ApproveDocumentsScreen = ({ navigation }) => {
             // Reload danh sách sau khi duyệt
             await loadDocuments();
 
+            // Thông báo cho HomeScreen cập nhật số phiếu cần duyệt
+            if (navigation && navigation.getParent) {
+                const parentNavigation = navigation.getParent();
+                if (parentNavigation && parentNavigation.emit) {
+                    parentNavigation.emit({
+                        type: 'refreshPendingCount',
+                    });
+                }
+            }
+
         } catch (error) {
             console.error('❌ Lỗi khi duyệt phiếu:', error);
             Alert.alert('Lỗi', `Không thể duyệt phiếu: ${error.message}`);
         } finally {
             setApprovingId(null);
         }
+    };
+
+    const handleViewDetail = async (document) => {
+        try {
+            if (document.documentType === 'import') {
+                // Gọi API để lấy chi tiết phiếu nhập
+                const detailData = await getImportDetail(document.id);
+                
+                // Gắn documentType vào dữ liệu chi tiết
+                const documentWithDetails = {
+                    ...detailData,
+                    documentType: 'import'
+                };
+                
+                setSelectedDocument(documentWithDetails);
+            } else if (document.documentType === 'invoice') {
+                // Gọi API để lấy chi tiết phiếu xuất
+                const detailData = await getInvoiceDetail(document.id);
+                
+                // Gắn documentType vào dữ liệu chi tiết
+                const documentWithDetails = {
+                    ...detailData,
+                    documentType: 'invoice'
+                };
+                
+                setSelectedDocument(documentWithDetails);
+            } else if (document.documentType === 'return') {
+                // Gọi API để lấy chi tiết phiếu trả hàng
+                const detailData = await getReturnDetail(document.id);
+                
+                // Gắn documentType vào dữ liệu chi tiết
+                const documentWithDetails = {
+                    ...detailData,
+                    documentType: 'return'
+                };
+                
+                setSelectedDocument(documentWithDetails);
+            } else {
+                // Fallback cho các loại phiếu khác
+                setSelectedDocument(document);
+            }
+            
+            setShowDetailModal(true);
+        } catch (error) {
+            console.error('❌ Lỗi khi lấy chi tiết phiếu:', error);
+            Alert.alert('Lỗi', 'Không thể lấy chi tiết phiếu');
+        }
+    };
+
+    const handleCloseDetailModal = () => {
+        setShowDetailModal(false);
+        setSelectedDocument(null);
     };
 
     const formatCurrency = (amount) => {
@@ -326,34 +400,67 @@ const ApproveDocumentsScreen = ({ navigation }) => {
                     )}
                 </View>
 
-                {/* Action Button */}
-                <TouchableOpacity
-                    style={{
-                        backgroundColor: typeInfo.color,
-                        borderRadius: 8,
-                        padding: 12,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        opacity: isApproving ? 0.7 : 1
-                    }}
-                    onPress={() => handleApprove(document)}
-                    disabled={isApproving}
-                >
-                    {isApproving ? (
-                        <ActivityIndicator size="small" color="#fff" />
-                    ) : (
-                        <Ionicons name="checkmark-circle-outline" size={20} color="#fff" />
-                    )}
-                    <Text style={{
-                        color: '#fff',
-                        fontWeight: '600',
-                        marginLeft: 8,
-                        fontSize: 16
-                    }}>
-                        {isApproving ? 'Đang duyệt...' : 'Duyệt phiếu'}
-                    </Text>
-                </TouchableOpacity>
+                {/* Action Buttons */}
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                    {/* Chi tiết Button */}
+                    <TouchableOpacity
+                        style={{
+                            flex: 1,
+                            backgroundColor: '#3b82f6',
+                            borderRadius: 8,
+                            padding: 12,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            shadowColor: '#3b82f6',
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: 0.3,
+                            shadowRadius: 4,
+                            elevation: 4
+                        }}
+                        onPress={() => handleViewDetail(document)}
+                    >
+                        <Ionicons name="eye-outline" size={20} color="#fff" />
+                        <Text style={{
+                            color: '#fff',
+                            fontWeight: '600',
+                            marginLeft: 8,
+                            fontSize: 16
+                        }}>
+                            Chi tiết
+                        </Text>
+                    </TouchableOpacity>
+
+                    {/* Duyệt phiếu Button */}
+                    <TouchableOpacity
+                        style={{
+                            flex: 1,
+                            backgroundColor: typeInfo.color,
+                            borderRadius: 8,
+                            padding: 12,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            opacity: isApproving ? 0.7 : 1
+                        }}
+                        onPress={() => handleApprove(document)}
+                        disabled={isApproving}
+                    >
+                        {isApproving ? (
+                            <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                            <Ionicons name="checkmark-circle-outline" size={20} color="#fff" />
+                        )}
+                        <Text style={{
+                            color: '#fff',
+                            fontWeight: '600',
+                            marginLeft: 8,
+                            fontSize: 16
+                        }}>
+                            {isApproving ? 'Đang duyệt...' : 'Duyệt phiếu'}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         );
     };
@@ -430,6 +537,13 @@ const ApproveDocumentsScreen = ({ navigation }) => {
                     )}
                 </View>
             </LinearGradient>
+
+            {/* Document Detail Modal */}
+            <DocumentDetailModal
+                visible={showDetailModal}
+                onClose={handleCloseDetailModal}
+                document={selectedDocument}
+            />
         </View>
     );
 };

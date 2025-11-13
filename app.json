@@ -2,7 +2,7 @@
   "expo": {
     "name": "NL KHO",
     "slug": "nl-kho",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/nlkho.png",
     "userInterfaceStyle": "light",
@@ -22,7 +22,7 @@
         "backgroundColor": "#16a34a"
       },
       "edgeToEdgeEnabled": true,
-      "googleServicesFile": "./android/app/google-services.json",
+      "googleServicesFile": "./google-services.json",
       "package": "com.namnhi993.nlkho"
     },
     "notification": {

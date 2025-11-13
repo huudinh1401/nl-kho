@@ -1,15 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StatusBar, Alert, Platform } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, StatusBar, Alert, Platform, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { getUserInfo, fetchUserProfile, logout } from '../services/api';
+import { useFocusEffect } from '@react-navigation/native';
+import { getUserInfo, fetchUserProfile, logout, getPendingDocumentsCount } from '../services/api';
+import Badge from '../components/Badge';
 
 const HomeScreen = ({ onLogout = null, navigation }) => {
     const [userInfo, setUserInfo] = useState(null);
+    const [pendingCount, setPendingCount] = useState(0);
+    const [loadingPendingCount, setLoadingPendingCount] = useState(false);
 
     useEffect(() => {
         loadUserInfo();
+        loadPendingCount();
     }, []);
+
+    // Cập nhật số phiếu cần duyệt khi quay lại màn hình
+    useFocusEffect(
+        useCallback(() => {
+            loadPendingCount();
+        }, [])
+    );
+
+    // Lắng nghe sự kiện refresh từ màn hình duyệt phiếu
+    useEffect(() => {
+        if (navigation) {
+            const unsubscribe = navigation.addListener('refreshPendingCount', () => {
+                loadPendingCount();
+            });
+            return unsubscribe;
+        }
+    }, [navigation]);
 
     const loadUserInfo = async () => {
         try {
@@ -30,6 +52,20 @@ const HomeScreen = ({ onLogout = null, navigation }) => {
         } catch (error) {
             console.error('❌ Lỗi khi lấy thông tin user:', error);
             // Nếu API lỗi, vẫn hiển thị thông tin cached
+        }
+    };
+
+    const loadPendingCount = async () => {
+        try {
+            setLoadingPendingCount(true);
+            const count = await getPendingDocumentsCount();
+            setPendingCount(count);
+            console.log('📊 Số phiếu cần duyệt:', count);
+        } catch (error) {
+            console.error('❌ Lỗi khi lấy số phiếu cần duyệt:', error);
+            setPendingCount(0);
+        } finally {
+            setLoadingPendingCount(false);
         }
     };
 
@@ -148,8 +184,31 @@ const HomeScreen = ({ onLogout = null, navigation }) => {
                                     }}
                                     activeOpacity={0.7}
                                 >
-                                    <View style={{ backgroundColor: item.color, borderRadius: 30, padding: 15, marginBottom: 10 }}>
-                                        <Ionicons name={item.icon} size={30} color="#fff" />
+                                    <View style={{ position: 'relative' }}>
+                                        <View style={{ backgroundColor: item.color, borderRadius: 30, padding: 15, marginBottom: 10 }}>
+                                            <Ionicons name={item.icon} size={30} color="#fff" />
+                                        </View>
+                                        {item.id === 2 && (
+                                            loadingPendingCount ? (
+                                                <View style={{
+                                                    position: 'absolute',
+                                                    top: -8,
+                                                    right: -8,
+                                                    backgroundColor: '#6b7280',
+                                                    borderRadius: 12,
+                                                    width: 24,
+                                                    height: 24,
+                                                    justifyContent: 'center',
+                                                    alignItems: 'center',
+                                                    borderWidth: 2,
+                                                    borderColor: '#fff',
+                                                }}>
+                                                    <ActivityIndicator size="small" color="#fff" />
+                                                </View>
+                                            ) : (
+                                                <Badge count={pendingCount} />
+                                            )
+                                        )}
                                     </View>
                                     <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151', textAlign: 'center' }}>
                                         {item.title}

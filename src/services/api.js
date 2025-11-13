@@ -148,16 +148,43 @@ export const logout = async () => {
 // Hàm lấy danh sách phiếu nhập
 export const getImports = async () => {
   try {
-    // console.log('🔄 Đang lấy danh sách phiếu nhập...');
-
     const response = await api.get('/imports');
-
-    const dataArray = Array.isArray(response.data) ? response.data : response.data.data || [];
-    // console.log('✅ Lấy thành công', dataArray.length, 'phiếu nhập');
-
     return response.data;
   } catch (error) {
     console.error('❌ Lỗi khi lấy phiếu nhập:', error.message);
+    throw error;
+  }
+};
+
+// Hàm lấy chi tiết phiếu nhập theo ID
+export const getImportDetail = async (importId) => {
+  try {
+    const response = await api.get(`/imports/${importId}`);
+    console.log('📥 Chi tiết phiếu nhập:', JSON.stringify(response.data, null, 2));
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Hàm lấy chi tiết phiếu xuất theo ID
+export const getInvoiceDetail = async (invoiceId) => {
+  try {
+    const response = await api.get(`/invoices/${invoiceId}`);
+    console.log('📤 Chi tiết phiếu xuất:', JSON.stringify(response.data, null, 2));
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Hàm lấy chi tiết phiếu trả hàng theo ID
+export const getReturnDetail = async (returnId) => {
+  try {
+    const response = await api.get(`/returns/${returnId}`);
+    console.log('🔄 Chi tiết phiếu trả hàng:', JSON.stringify(response.data, null, 2));
+    return response.data;
+  } catch (error) {
     throw error;
   }
 };
@@ -181,19 +208,7 @@ export const approveImport = async (importId) => {
 // Hàm lấy danh sách phiếu xuất
 export const getInvoices = async () => {
   try {
-    // console.log('🔄 Đang lấy danh sách phiếu xuất...');
-
     const response = await api.get('/invoices');
-
-    // console.log('📊 Response data phiếu xuất:', JSON.stringify(response.data, null, 2));
-
-    const dataArray = Array.isArray(response.data) ? response.data : response.data.data || [];
-    // console.log('✅ Lấy thành công', dataArray.length, 'phiếu xuất');
-
-    // if (dataArray.length > 0) {
-    //   console.log('📋 Phiếu xuất đầu tiên:', JSON.stringify(dataArray[0], null, 2));
-    // }
-
     return response.data;
   } catch (error) {
     console.error('❌ Lỗi khi lấy phiếu xuất:', error.message);
@@ -220,19 +235,7 @@ export const approveInvoice = async (invoiceId) => {
 // Hàm lấy danh sách phiếu trả hàng
 export const getReturns = async () => {
   try {
-    console.log('🔄 Đang lấy danh sách phiếu trả hàng...');
-
     const response = await api.get('/returns');
-
-    console.log('📊 Response data phiếu trả hàng:', JSON.stringify(response.data, null, 2));
-
-    const dataArray = Array.isArray(response.data) ? response.data : response.data.data || [];
-    console.log('✅ Lấy thành công', dataArray.length, 'phiếu trả hàng');
-
-    if (dataArray.length > 0) {
-      console.log('📋 Phiếu trả hàng đầu tiên:', JSON.stringify(dataArray[0], null, 2));
-    }
-
     return response.data;
   } catch (error) {
     console.error('❌ Lỗi khi lấy phiếu trả hàng:', error.message);
@@ -253,6 +256,44 @@ export const approveReturn = async (returnId) => {
   } catch (error) {
     console.error('❌ Lỗi khi duyệt phiếu trả hàng:', error.message);
     throw error;
+  }
+};
+
+// Hàm lấy tổng số phiếu cần duyệt
+export const getPendingDocumentsCount = async () => {
+  try {
+    // Gọi cả 3 API song song
+    const [importsResult, invoicesResult, returnsResult] = await Promise.all([
+      getImports().catch(() => []),
+      getInvoices().catch(() => []),
+      getReturns().catch(() => [])
+    ]);
+
+    // Xử lý phiếu nhập
+    const importsArray = Array.isArray(importsResult)
+      ? importsResult
+      : importsResult.data || [];
+    const pendingImportsCount = importsArray.filter(doc => doc.status === 'pending').length;
+
+    // Xử lý phiếu xuất
+    const invoicesArray = Array.isArray(invoicesResult)
+      ? invoicesResult
+      : invoicesResult.data || [];
+    const pendingInvoicesCount = invoicesArray.filter(doc => doc.status === 'pending').length;
+
+    // Xử lý phiếu trả hàng
+    const returnsArray = Array.isArray(returnsResult)
+      ? returnsResult
+      : returnsResult.data || [];
+    const pendingReturnsCount = returnsArray.filter(doc => doc.status === 'pending').length;
+
+    // Tổng số phiếu cần duyệt
+    const totalPendingCount = pendingImportsCount + pendingInvoicesCount + pendingReturnsCount;
+
+    return totalPendingCount;
+  } catch (error) {
+    console.error('❌ Lỗi khi lấy số phiếu cần duyệt:', error.message);
+    return 0; // Trả về 0 nếu có lỗi
   }
 };
 
